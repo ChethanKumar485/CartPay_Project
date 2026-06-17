@@ -334,3 +334,20 @@ A network of **smart trolleys**, each acting as a mobile self-checkout point, co
 
 CartPay reimagines the supermarket checkout experience by moving billing, item verification, payment, and bagging directly into the shopping cart itself. By combining low-cost IoT hardware (barcode scanning + weight sensing) with a robust backend and clear anti-mismatch logic, it directly addresses the long-queue problem common in supermarkets, while also giving store owners better inventory visibility, reduced losses from mismatches/theft, and richer analytics. The phased roadmap makes it practical to start as a single-cart college prototype and scale up to a full store deployment over time.
 still more implementation will be done,in further days.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! To contribute:
+Contributions are welcome! Feel free to fork this repository and submit pull requests.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+Copyright © 2026 Chethan Kumar
+
+---
