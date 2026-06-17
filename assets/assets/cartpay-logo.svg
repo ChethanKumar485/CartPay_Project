@@ -1,0 +1,43 @@
+<svg width="800" height="260" viewBox="0 0 800 260" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00C6FF"/>
+      <stop offset="50%" stop-color="#0072FF"/>
+      <stop offset="100%" stop-color="#00E5A8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="260" fill="#0B1220"/>
+
+  <!-- Cart -->
+  <path d="M80 70 H160 L145 140 H100 Z"
+        fill="none"
+        stroke="url(#g)"
+        stroke-width="8"/>
+
+  <circle cx="105" cy="165" r="10" fill="url(#g)"/>
+  <circle cx="150" cy="165" r="10" fill="url(#g)"/>
+
+  <!-- Check -->
+  <path d="M110 110 L125 125 L155 90"
+        stroke="#00E5A8"
+        stroke-width="6"
+        fill="none"/>
+
+  <!-- Text -->
+  <text x="220" y="130"
+        font-size="60"
+        font-family="Arial"
+        fill="url(#g)"
+        font-weight="bold">
+    CartPay
+  </text>
+
+  <text x="220" y="170"
+        font-size="20"
+        fill="#AAB4C5">
+    Smart Self Checkout Trolley System
+  </text>
+
+</svg>
