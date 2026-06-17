@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CartPay — Smart Self-Checkout Cart</title>
+<link rel="icon" href="data:," />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg: #F5F1E7;
+    --ink: #20291F;
+    --ink-soft: #6B7569;
+    --primary: #2E6F4E;
+    --primary-soft: #E1EEE6;
+    --accent: #FF6A45;
+    --accent-soft: #FFE6DC;
+    --warn: #D8973C;
+    --warn-soft: #FBEFDD;
+    --alert: #D2483F;
+    --alert-soft: #FBE2DF;
+    --surface: #FFFFFF;
+    --line: #E1D9C8;
+    --bezel: #16201A;
+    --screen: #0E1813;
+    --screen-line: rgba(233,243,236,0.09);
+    --screen-text: #E9F3EC;
+    --screen-soft: #9FB6A8;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Outfit', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+    --radius: 16px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ -webkit-font-smoothing: antialiased; }
+  body{
+    margin:0;
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  button{ font-family: inherit; }
+
+  /* ---------- Header ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding: 18px 32px;
+    background: var(--ink);
+    color: var(--bg);
+    flex-wrap: wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand-mark{ color: var(--accent); flex-shrink:0; }
+  .brand-name{
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(22px, 3vw, 28px);
+    letter-spacing: -0.02em;
+  }
+  .brand-name span{ color: var(--accent); }
+  .brand-tag{
+    font-size: 13px;
+    color: #B9C4BB;
+    margin-top: 2px;
+  }
+  .session-badge{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+  .rfid-dot{
+    width:8px; height:8px; border-radius:50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 0 rgba(255,106,69,0.6);
+    animation: rfidPulse 2s infinite;
+  }
+  @keyframes rfidPulse{
+    0%{ box-shadow: 0 0 0 0 rgba(255,106,69,0.5); }
+    70%{ box-shadow: 0 0 0 6px rgba(255,106,69,0); }
+    100%{ box-shadow: 0 0 0 0 rgba(255,106,69,0); }
+  }
+  .session-label{ color:#B9C4BB; }
+  .session-id{ color: var(--bg); font-weight:700; }
+
+  /* ---------- Layout ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 28px;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 28px 32px 60px;
+    align-items: start;
+  }
+  @media (max-width: 940px){
+    .layout{ grid-template-columns: 1fr; padding: 20px 18px 48px; }
+    .device-wrap{ position: static !important; order: -1; }
+  }
+
+  /* ---------- Shelf ---------- */
+  .shelf-head h1{
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(26px, 3.4vw, 36px);
+    margin: 4px 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .shelf-head p{
+    margin: 0 0 22px;
+    color: var(--ink-soft);
+    font-size: 15px;
+    max-width: 46ch;
+  }
+  .shelf-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 14px;
+  }
+  .card{
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .card:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px -16px rgba(32,41,31,0.35);
+    border-color: var(--primary);
+  }
+  .card:focus-visible{
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  .card-top{
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .cat-pill{
+    display:inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--cat-bg);
+    color: var(--cat);
+  }
+  .exp-pill{
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .exp-pill.warn{ background: var(--warn-soft); color: var(--warn); }
+  .exp-pill.alert{ background: var(--alert-soft); color: var(--alert); }
+  .card-name{
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0 0 10px;
+    line-height: 1.35;
+  }
+  .card-row{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--font-mono);
+  }
+  .card-price{
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--primary);
+  }
+  .card-price .was{
+    text-decoration: line-through;
+    color: var(--ink-soft);
+    font-weight: 400;
+    font-size: 12px;
+    margin-right: 5px;
+  }
+  .card-weight{ font-size: 12px; color: var(--ink-soft); }
+  .card-barcode{
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    opacity: .65;
+  }
+  .card.scanning::after{
+    content:'';
+    position:absolute;
+    left:0; right:0; top:-6%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    box-shadow: 0 0 14px var(--accent);
+    animation: scanSweep .5s ease-in-out;
+  }
+  @keyframes scanSweep{
+    0%{ top:-6%; opacity:0; }
+    15%{ opacity:1; }
+    100%{ top:104%; opacity:0; }
+  }
+
+  /* ---------- Device ---------- */
+  .device-wrap{ position: sticky; top: 24px; }
+  .device{
+    background: var(--bezel);
+    border-radius: 28px;
+    padding: 14px;
+    box-shadow: 0 18px 40px -20px rgba(20,30,22,0.55);
+  }
+  .device.flash{ animation: deviceFlash .35s ease; }
+  @keyframes deviceFlash{
+    0%{ box-shadow: 0 0 0 0 var(--accent); }
+    40%{ box-shadow: 0 0 0 6px rgba(255,106,69,0.35); }
+    100%{ box-shadow: 0 18px 40px -20px rgba(20,30,22,0.55); }
+  }
+  .screen{
+    background: var(--screen);
+    border-radius: 18px;
+    padding: 18px 18px 16px;
+    color: var(--screen-text);
+    font-family: var(--font-mono);
+    box-shadow: inset 0 0 0 1px rgba(233,243,236,0.06);
+  }
+  .screen-head{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: var(--screen-soft);
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--screen-line);
+    margin-bottom: 12px;
+  }
+  .live-dot{
+    width:7px; height:7px; border-radius:50%;
+    background: #5FD08E;
+    animation: rfidPulse 1.6s infinite;
+  }
+  .receipt{
+    min-height: 150px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .receipt-empty{
+    color: var(--screen-soft);
+    font-size: 13px;
+    text-align: center;
+    padding: 36px 8px;
+    line-height: 1.7;
+  }
+  .receipt-line{
+    display:flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12.5px;
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--screen-line);
+    animation: lineIn .25s ease-out;
+  }
+  @keyframes lineIn{
+    from{ opacity:0; transform: translateY(-6px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  .receipt-line:last-child{ border-bottom: none; }
+  .rl-name{ flex: 1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rl-tag{ font-size: 10px; color: var(--accent); margin-left: 6px; }
+  .rl-qty{ color: var(--screen-soft); white-space:nowrap; }
+  .rl-total{ font-weight:700; white-space:nowrap; }
+
+  .weight-check{
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--screen-line);
+    font-size: 11px;
+  }
+  .wc-label{
+    letter-spacing: 0.16em;
+    color: var(--screen-soft);
+    margin-bottom: 8px;
+  }
+  .wc-row{
+    display:flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .wc-bar{
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(233,243,236,0.08);
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .wc-bar-fill{
+    height: 100%;
+    border-radius: 4px;
+    background: var(--primary);
+    transition: width .3s ease, background .2s ease;
+  }
+  .wc-bar-fill.mismatch{ background: var(--alert); animation: pulse 1s infinite; }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+  .wc-status{
+    font-size: 12px;
+    margin-top: 6px;
+  }
+  .wc-status.ok{ color: #7FD9A8; }
+  .wc-status.bad{ color: #F2A39C; animation: pulse 1.2s infinite; }
+  .resolve-btn{
+    margin-top: 8px;
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+
+  .totals{
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--screen-line);
+  }
+  .totals-row{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+    color: var(--screen-soft);
+    margin-bottom: 4px;
+  }
+  .totals-row.grand{
+    color: var(--screen-text);
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+  .bag-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size: 12px;
+    color: var(--screen-soft);
+    margin-top: 6px;
+  }
+  .bag-row svg{ color: var(--accent); flex-shrink:0; }
+
+  .checkout-btn{
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: filter .15s ease, opacity .15s ease;
+  }
+  .checkout-btn:hover:not(:disabled){ filter: brightness(1.08); }
+  .checkout-btn:disabled{ opacity: .35; cursor: not-allowed; }
+
+  /* ---------- Demo controls ---------- */
+  .demo-controls{
+    margin-top: 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 4px 16px;
+    font-size: 13px;
+  }
+  .demo-controls summary{
+    cursor: pointer;
+    padding: 10px 0;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .demo-body{ padding: 4px 0 14px; display:flex; flex-direction:column; gap:10px; }
+  .demo-body label{ display:flex; align-items:center; gap:8px; cursor:pointer; }
+  .demo-btn{
+    background: var(--primary-soft);
+    color: var(--primary);
+    border: none;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align:left;
+  }
+  .demo-btn:hover{ filter: brightness(0.97); }
+
+  /* ---------- Overlay / modal ---------- */
+  .overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(20,28,21,0.55);
+    backdrop-filter: blur(3px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 18px;
+    z-index: 50;
+    opacity:0;
+    visibility:hidden;
+    transition: opacity .2s ease, visibility .2s ease;
+  }
+  .overlay.open{ opacity:1; visibility:visible; }
+  .modal{
+    position: relative;
+    background: var(--surface);
+    border-radius: 22px;
+    padding: 30px 28px;
+    max-width: 460px;
+    width: 100%;
+    max-height: 86vh;
+    overflow-y: auto;
+    box-shadow: 0 30px 60px -30px rgba(20,28,21,0.5);
+  }
+  .modal-close{
+    position:absolute; top:16px; right:16px;
+    border:none; background: var(--bg);
+    width:32px; height:32px; border-radius:50%;
+    font-size: 18px; line-height:1; cursor:pointer;
+    color: var(--ink-soft);
+  }
+  .step.hidden{ display:none; }
+  .step h2{
+    font-family: var(--font-display);
+    font-size: 22px;
+    margin: 0 0 16px;
+  }
+  .step p.lead{ color: var(--ink-soft); margin: -8px 0 18px; font-size: 14px; }
+
+  .bill-list{ margin: 0 0 14px; }
+  .bill-line{
+    display:flex; justify-content: space-between; gap:10px;
+    font-size: 13.5px; padding: 7px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .bill-line .bl-name{ flex:1; }
+  .bill-line .bl-total{ font-family: var(--font-mono); font-weight:700; }
+  .bill-summary-row{
+    display:flex; justify-content: space-between; align-items:baseline;
+    padding: 10px 0; font-family: var(--font-mono);
+  }
+  .bill-summary-row.grand{ font-size: 22px; font-weight:700; border-top: 1px dashed var(--line); margin-top:4px; padding-top:14px; }
+  .bag-suggest{
+    display:flex; align-items:center; gap:10px;
+    background: var(--primary-soft); color: var(--primary);
+    border-radius: 12px; padding: 12px 14px; margin: 6px 0 18px;
+    font-size: 13.5px; font-weight: 600;
+  }
+  .bag-suggest svg{ flex-shrink:0; }
+
+  .pay-options{ display:flex; flex-direction:column; gap:10px; margin-bottom: 6px; }
+  .pay-btn{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding: 14px; border-radius: 12px;
+    font-family: var(--font-display); font-weight:700; font-size:15px;
+    cursor:pointer; border: 1px solid transparent;
+  }
+  .pay-btn.primary{ background: var(--primary); color:#fff; border:none; }
+  .pay-btn.primary:hover{ filter: brightness(1.06); }
+  .pay-btn.outline{ background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+  .pay-btn.outline:hover{ border-color: var(--primary); color: var(--primary); }
+  .text-link{
+    display:block; text-align:center; margin-top: 14px;
+    color: var(--ink-soft); font-size: 13px; text-decoration: underline;
+    background:none; border:none; cursor:pointer; width:100%;
+  }
+
+  /* cash step */
+  .due-box{
+    background: var(--bg); border-radius: 12px; padding: 16px;
+    text-align:center; margin-bottom: 16px;
+  }
+  .due-box .due-label{ font-size:12px; letter-spacing:0.12em; color: var(--ink-soft); text-transform:uppercase; }
+  .due-box .due-amount{ font-family: var(--font-mono); font-size: 30px; font-weight:700; margin-top:4px; }
+  .quick-amounts{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 14px; }
+  .quick-amounts button{
+    flex: 1 1 auto; min-width: 64px;
+    background: var(--primary-soft); color: var(--primary);
+    border:none; border-radius: 10px; padding: 10px 8px;
+    font-family: var(--font-mono); font-weight:700; cursor:pointer;
+  }
+  .quick-amounts button.ghost{ background: var(--bg); color: var(--ink-soft); }
+  .tender-summary{ font-family: var(--font-mono); font-size: 14px; }
+  .tender-summary .ts-row{ display:flex; justify-content:space-between; padding: 4px 0; }
+  .tender-summary .ts-row.change{ color: var(--primary); font-weight:700; }
+  .tender-summary .ts-row.due{ color: var(--alert); font-weight:700; }
+
+  /* processing & success */
+  .center-step{ text-align:center; padding: 10px 0 4px; }
+  .spinner{
+    width:46px; height:46px; margin: 10px auto 18px;
+    border: 4px solid var(--primary-soft);
+    border-top-color: var(--primary);
+    border-radius:50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .check-icon{ width:64px; height:64px; color: var(--primary); margin: 6px auto 16px; display:block; }
+  .check-circle{ stroke-dasharray: 152; stroke-dashoffset: 152; animation: drawCircle .5s ease forwards; }
+  .check-path{ stroke-dasharray: 36; stroke-dashoffset: 36; animation: drawCheck .35s .45s ease forwards; }
+  @keyframes drawCircle{ to{ stroke-dashoffset: 0; } }
+  @keyframes drawCheck{ to{ stroke-dashoffset: 0; } }
+  .success-amount{ font-family: var(--font-mono); font-size: 28px; font-weight:700; margin: 4px 0 2px; }
+  .success-sub{ color: var(--ink-soft); font-size: 13.5px; margin-bottom: 14px; }
+  .change-breakdown{
+    background: var(--bg); border-radius: 12px; padding: 12px 14px;
+    font-family: var(--font-mono); font-size: 13px; text-align:left; margin-bottom: 16px;
+  }
+  .change-breakdown .cb-title{ color: var(--ink-soft); font-size:11px; letter-spacing:0.1em; margin-bottom:6px; }
+  .change-breakdown .cb-row{ display:flex; justify-content:space-between; padding:2px 0; }
+
+  /* gate */
+  .gate-stage{
+    position: relative; height: 150px; margin: 6px 0 18px;
+    background: var(--bg); border-radius: 14px; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .gate-panel{
+    position:absolute; top:0; bottom:0; width:50%;
+    background: var(--ink);
+    transition: transform .7s cubic-bezier(.22,.61,.36,1);
+  }
+  .gate-panel.left{ left:0; transform: translateX(0); border-right: 2px dashed var(--accent); }
+  .gate-panel.right{ right:0; transform: translateX(0); border-left: 2px dashed var(--accent); }
+  .gate-stage.open .gate-panel.left{ transform: translateX(-100%); }
+  .gate-stage.open .gate-panel.right{ transform: translateX(100%); }
+  .gate-status{
+    position:relative; z-index:2;
+    background: var(--surface); border-radius: 999px;
+    padding: 8px 18px; font-weight:700; font-size:13px;
+    letter-spacing: 0.08em; color: var(--ink-soft);
+    opacity:0; transition: opacity .3s ease .5s;
+  }
+  .gate-stage.open .gate-status{ opacity:1; color: var(--primary); }
+  .recap{
+    background: var(--bg); border-radius: 12px; padding: 14px 16px;
+    font-family: var(--font-mono); font-size: 13px; margin-bottom: 18px;
+  }
+  .recap .recap-row{ display:flex; justify-content:space-between; padding:3px 0; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" width="34" height="26" viewBox="0 0 32 24" fill="currentColor" aria-hidden="true">
+        <rect x="0" y="0" width="2" height="24"/><rect x="4" y="0" width="4" height="24"/>
+        <rect x="10" y="0" width="2" height="24"/><rect x="14" y="0" width="3" height="24"/>
+        <rect x="19" y="0" width="2" height="24"/><rect x="23" y="0" width="4" height="24"/>
+        <rect x="29" y="0" width="2" height="24"/>
+      </svg>
+      <div>
+        <div class="brand-name">Cart<span>Pay</span></div>
+        <div class="brand-tag">Scan as you shop. Skip the queue.</div>
+      </div>
+    </div>
+    <div class="session-badge">
+      <span class="rfid-dot" aria-hidden="true"></span>
+      <span class="session-label">CART</span>
+      <span class="session-id" id="cartId">CP-0000</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="shelf" aria-label="Store shelf">
+      <div class="shelf-head">
+        <h1>The Shelf</h1>
+        <p>Tap an item to simulate scanning its barcode straight into your cart display.</p>
+      </div>
+      <div class="shelf-grid" id="shelfGrid"></div>
+    </section>
+
+    <aside class="device-wrap" aria-label="Smart cart display">
+      <div class="device" id="device">
+        <div class="screen">
+          <div class="screen-head">
+            <span class="live-dot" aria-hidden="true"></span> CARTPAY DISPLAY
+          </div>
+          <div class="receipt" id="receipt">
+            <div class="receipt-empty" id="receiptEmpty">
+              Your cart is empty.<br>Scan an item from the shelf to begin.
+            </div>
+            <div class="receipt-lines" id="receiptLines"></div>
+          </div>
+          <div class="weight-check" id="weightCheck" style="display:none">
+            <div class="wc-label">WEIGHT CHECK</div>
+            <div class="wc-row"><span>Expected</span><span id="wcExpected">0 g</span></div>
+            <div class="wc-row"><span>Measured</span><span id="wcMeasured">0 g</span></div>
+            <div class="wc-bar"><div class="wc-bar-fill" id="wcBar" style="width:0%"></div></div>
+            <div class="wc-status ok" id="wcStatus">Item matches barcode — all good</div>
+            <button class="resolve-btn" id="resolveBtn" style="display:none">Re-check item &amp; resolve mismatch</button>
+          </div>
+          <div class="totals" id="totals" style="display:none">
+            <div class="totals-row"><span>Items</span><span id="totalItems">0</span></div>
+            <div class="totals-row"><span>Total weight</span><span id="totalWeight">0 g</span></div>
+            <div class="totals-row grand"><span>Total</span><span id="grandTotal">₹0</span></div>
+            <div class="bag-row">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>
+              </svg>
+              <span id="bagSuggestion">Carry bag: —</span>
+            </div>
+          </div>
+          <button class="checkout-btn" id="checkoutBtn" disabled>Checkout</button>
+        </div>
+      </div>
+
+      <details class="demo-controls">
+        <summary>Demo controls</summary>
+        <div class="demo-body">
+          <label><input type="checkbox" id="mismatchToggle"> Simulate an item-swap on the next scan</label>
+          <button class="demo-btn" id="removeLastBtn">Remove last scanned item</button>
+          <button class="demo-btn" id="resetBtn">Reset session</button>
+        </div>
+      </details>
+    </aside>
+  </main>
+
+  <!-- Checkout overlay -->
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Checkout">
+    <div class="modal">
+      <button class="modal-close" id="modalClose" aria-label="Close checkout">×</button>
+
+      <!-- Step: bill -->
+      <div class="step" id="step-bill">
+        <h2>Your bill</h2>
+        <div class="bill-list" id="billList"></div>
+        <div class="bill-summary-row"><span>Total weight</span><span id="billWeight">0 g</span></div>
+        <div class="bill-summary-row grand"><span>Total due</span><span id="billTotal">₹0</span></div>
+        <div class="bag-suggest" id="billBag">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>
+          </svg>
+          <span id="billBagText">Carry bag: —</span>
+        </div>
+        <div class="pay-options">
+          <button class="pay-btn primary" id="payDigital">Pay digitally (UPI / Card)</button>
+          <button class="pay-btn outline" id="payCash">Pay with cash</button>
+        </div>
+        <button class="text-link" id="backToShop">Back to shopping</button>
+      </div>
+
+      <!-- Step: cash -->
+      <div class="step hidden" id="step-cash">
+        <h2>Pay with cash</h2>
+        <div class="due-box">
+          <div class="due-label">Amount due</div>
+          <div class="due-amount" id="cashDue">₹0</div>
+        </div>
+        <div class="quick-amounts" id="quickAmounts"></div>
+        <div class="tender-summary">
+          <div class="ts-row"><span>Cash tendered</span><span id="tenderAmt">₹0</span></div>
+          <div class="ts-row due" id="tsDueRow"><span>Balance due</span><span id="tsDueAmt">₹0</span></div>
+          <div class="ts-row change" id="tsChangeRow" style="display:none"><span>Change to return</span><span id="tsChangeAmt">₹0</span></div>
+        </div>
+        <div class="pay-options" style="margin-top:14px">
+          <button class="pay-btn primary" id="confirmCash" disabled>Confirm payment</button>
+        </div>
+        <button class="text-link" id="backToBillFromCash">Back to bill</button>
+      </div>
+
+      <!-- Step: processing -->
+      <div class="step hidden center-step" id="step-processing">
+        <div class="spinner" aria-hidden="true"></div>
+        <h2 style="margin-bottom:4px">Processing payment…</h2>
+        <p class="lead" style="margin-top:0">Talking to your bank, securely.</p>
+      </div>
+
+      <!-- Step: success -->
+      <div class="step hidden center-step" id="step-success">
+        <svg class="check-icon" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle class="check-circle" cx="26" cy="26" r="24" stroke-width="3"/>
+          <path class="check-path" d="M14 27l7 7 17-17" stroke-width="3.5"/>
+        </svg>
+        <h2 style="margin-bottom:0">Payment successful</h2>
+        <div class="success-amount" id="successAmount">₹0</div>
+        <div class="success-sub" id="successSub">Paid by digital wallet</div>
+        <div class="change-breakdown" id="changeBreakdown" style="display:none">
+          <div class="cb-title">CHANGE TO COLLECT</div>
+          <div id="changeRows"></div>
+        </div>
+        <button class="pay-btn primary" id="continueToGate" style="width:100%">Continue to exit</button>
+      </div>
+
+      <!-- Step: gate -->
+      <div class="step hidden" id="step-gate">
+        <h2 style="text-align:center">Exit gate</h2>
+        <p class="lead" style="text-align:center">Your cart's RFID tag has been marked as paid.</p>
+        <div class="gate-stage" id="gateStage">
+          <div class="gate-panel left"></div>
+          <div class="gate-panel right"></div>
+          <div class="gate-status" id="gateStatus">ACCESS GRANTED</div>
+        </div>
+        <div class="recap" id="recap"></div>
+        <button class="pay-btn primary" id="newSession" style="width:100%">Start a new shopping session</button>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+  // ---------------------------------------------------------------
+  // Data: mock supermarket inventory (barcode, name, category, price,
+  // weight in grams, days until expiry, optional near-expiry discount)
+  // ---------------------------------------------------------------
+  const CATEGORY_COLORS = {
+    Staples:        { cat: '#9C7E3D', bg: '#F3ECDD' },
+    Dairy:          { cat: '#3E7CA6', bg: '#E2EEF5' },
+    Bakery:         { cat: '#C1623D', bg: '#F6E4DB' },
+    Snacks:         { cat: '#C98A2E', bg: '#FBEEDA' },
+    Beverages:      { cat: '#2C8C82', bg: '#DFF1EE' },
+    'Personal Care':{ cat: '#8A5B8C', bg: '#F0E3F0' },
+    Household:      { cat: '#5A6B7A', bg: '#E6EBEF' },
+  };
+
+  const ITEMS = [
+    { barcode:'8901030123456', name:'Basmati Rice 1kg',        category:'Staples',       price:185, weight:1000, expiryDays:180 },
+    { barcode:'8901030123457', name:'Toor Dal 1kg',            category:'Staples',       price:145, weight:1000, expiryDays:200 },
+    { barcode:'8901030123458', name:'Wheat Atta 5kg',          category:'Staples',       price:260, weight:5000, expiryDays:120 },
+    { barcode:'8901030123459', name:'Toned Milk 1L',           category:'Dairy',         price:64,  weight:1030, expiryDays:2 },
+    { barcode:'8901030123460', name:'Salted Butter 500g',      category:'Dairy',         price:270, weight:510,  expiryDays:90 },
+    { barcode:'8901030123461', name:'Fresh Curd 400g',         category:'Dairy',         price:45,  weight:410,  expiryDays:1, discount:10 },
+    { barcode:'8901030123462', name:'Brown Bread 400g',        category:'Bakery',        price:55,  weight:400,  expiryDays:1, discount:10 },
+    { barcode:'8901030123463', name:'Digestive Biscuits 250g', category:'Snacks',        price:60,  weight:255,  expiryDays:150 },
+    { barcode:'8901030123464', name:'Potato Chips 90g',        category:'Snacks',        price:30,  weight:92,   expiryDays:100 },
+    { barcode:'8901030123465', name:'Mixed Nuts 200g',         category:'Snacks',        price:220, weight:205,  expiryDays:180 },
+    { barcode:'8901030123466', name:'Orange Juice 1L',         category:'Beverages',     price:110, weight:1040, expiryDays:10 },
+    { barcode:'8901030123467', name:'Green Tea, 25 bags',      category:'Beverages',     price:150, weight:50,   expiryDays:365 },
+    { barcode:'8901030123468', name:'Shampoo 340ml',           category:'Personal Care', price:210, weight:360,  expiryDays:365 },
+    { barcode:'8901030123469', name:'Toothpaste 150g',         category:'Personal Care', price:95,  weight:160,  expiryDays:365 },
+    { barcode:'8901030123470', name:'Dish Wash Liquid 500ml',  category:'Household',     price:99,  weight:520,  expiryDays:365 },
+    { barcode:'8901030123471', name:'Detergent Powder 1kg',    category:'Household',     price:130, weight:1000, expiryDays:365 },
+  ];
+
+  const BAG_SIZES = [
+    { max: 2000,  label: 'Small bag' },
+    { max: 5000,  label: 'Medium bag' },
+    { max: 10000, label: 'Large bag' },
+    { max: Infinity, label: 'Jumbo bag (or 2 bags)' },
+  ];
+
+  const DENOMINATIONS = [500, 200, 100, 50, 20, 10, 5, 2, 1];
+
+  // ---------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------
+  // cart = array of "scan events". Each scan is one unit of one item,
+  // so removing the last scan and computing weight totals stays simple.
+  let cart = [];
+  let mismatchNext = false;
+  let tenderedAmount = 0;
+
+  // ---------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------
+  const fmtINR = n => '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  const fmtG = n => Math.round(n).toLocaleString('en-IN') + ' g';
+  const effectivePrice = item => item.discount ? Math.round(item.price * (1 - item.discount/100)) : item.price;
+
+  function getBagSize(grams){
+    return BAG_SIZES.find(b => grams <= b.max).label;
+  }
+
+  function expiryBadge(item){
+    if (item.expiryDays <= 1) return { cls:'alert', text: item.discount ? `Today only · ${item.discount}% off` : 'Use today' };
+    if (item.expiryDays <= 3) return { cls:'warn', text: `Expires in ${item.expiryDays}d` };
+    return null;
+  }
+
+  // ---------------------------------------------------------------
+  // Shelf rendering
+  // ---------------------------------------------------------------
+  function buildShelf(){
+    const grid = document.getElementById('shelfGrid');
+    ITEMS.forEach(item => {
+      const colors = CATEGORY_COLORS[item.category];
+      const card = document.createElement('button');
+      card.className = 'card';
+      card.type = 'button';
+      card.style.setProperty('--cat', colors.cat);
+      card.style.setProperty('--cat-bg', colors.bg);
+      card.dataset.barcode = item.barcode;
+
+      const badge = expiryBadge(item);
+      const priceHtml = item.discount
+        ? `<span class="was">${fmtINR(item.price)}</span>${fmtINR(effectivePrice(item))}`
+        : fmtINR(item.price);
+
+      card.innerHTML = `
+        <div class="card-top">
+          <span class="cat-pill">${item.category}</span>
+          ${badge ? `<span class="exp-pill ${badge.cls}">${badge.text}</span>` : ''}
+        </div>
+        <p class="card-name">${item.name}</p>
+        <div class="card-row">
+          <span class="card-price">${priceHtml}</span>
+          <span class="card-weight">${fmtG(item.weight)}</span>
+        </div>
+        <div class="card-barcode">⎮⎮⎮ ${item.barcode}</div>
+      `;
+
+      card.addEventListener('click', () => scanItem(item, card));
+      grid.appendChild(card);
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Scanning
+  // ---------------------------------------------------------------
+  function scanItem(item, cardEl){
+    // Laser-sweep animation on the tapped shelf card
+    cardEl.classList.remove('scanning');
+    requestAnimationFrame(() => cardEl.classList.add('scanning'));
+    cardEl.addEventListener('animationend', () => cardEl.classList.remove('scanning'), { once:true });
+
+    // Flash the cart display to mimic a "beep" / registration moment
+    const device = document.getElementById('device');
+    device.classList.remove('flash');
+    requestAnimationFrame(() => device.classList.add('flash'));
+    device.addEventListener('animationend', () => device.classList.remove('flash'), { once:true });
+
+    let measuredWeight = item.weight;
+    let swapped = false;
+    if (mismatchNext){
+      // Simulate a heavier / different item being placed than what was scanned
+      measuredWeight = Math.round(item.weight * 1.6 + 150);
+      mismatchNext = false;
+      document.getElementById('mismatchToggle').checked = false;
+      swapped = true;
+    }
+
+    cart.push({
+      barcode: item.barcode,
+      expectedWeight: item.weight,
+      measuredWeight,
+      swapped,
+    });
+
+    render();
+  }
+
+  // ---------------------------------------------------------------
+  // Rendering: cart display
+  // ---------------------------------------------------------------
+  function render(){
+    const receiptLines = document.getElementById('receiptLines');
+    const receiptEmpty = document.getElementById('receiptEmpty');
+    const weightCheck = document.getElementById('weightCheck');
+    const totals = document.getElementById('totals');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+
+    if (cart.length === 0){
+      receiptEmpty.style.display = 'block';
+      receiptLines.innerHTML = '';
+      weightCheck.style.display = 'none';
+      totals.style.display = 'none';
+      checkoutBtn.disabled = true;
+      return;
+    }
+
+    receiptEmpty.style.display = 'none';
+    weightCheck.style.display = 'block';
+    totals.style.display = 'block';
+
+    // Group scan events by barcode for the receipt
+    const groups = {};
+    let totalExpected = 0, totalMeasured = 0, subtotal = 0, totalItems = 0;
+
+    cart.forEach(ev => {
+      const item = ITEMS.find(i => i.barcode === ev.barcode);
+      if (!groups[ev.barcode]) groups[ev.barcode] = { item, qty:0, lineTotal:0 };
+      groups[ev.barcode].qty += 1;
+      groups[ev.barcode].lineTotal += effectivePrice(item);
+      totalExpected += ev.expectedWeight;
+      totalMeasured += ev.measuredWeight;
+      subtotal += effectivePrice(item);
+      totalItems += 1;
+    });
+
+    receiptLines.innerHTML = Object.values(groups).map(g => {
+      const badge = expiryBadge(g.item);
+      return `
+        <div class="receipt-line">
+          <span class="rl-name">${g.item.name}${badge ? `<span class="rl-tag">${badge.cls === 'alert' ? '!' : '~'} ${badge.text}</span>` : ''}</span>
+          <span class="rl-qty">x${g.qty}</span>
+          <span class="rl-total">${fmtINR(g.lineTotal)}</span>
+        </div>`;
+    }).join('');
+
+    // Weight verification
+    const tolerance = Math.max(40, totalExpected * 0.03);
+    const diff = Math.abs(totalMeasured - totalExpected);
+    const mismatch = diff > tolerance;
+
+    document.getElementById('wcExpected').textContent = fmtG(totalExpected);
+    document.getElementById('wcMeasured').textContent = fmtG(totalMeasured);
+
+    const pct = totalExpected === 0 ? 0 : Math.min(100, (totalMeasured / totalExpected) * 100);
+    const bar = document.getElementById('wcBar');
+    bar.style.width = pct + '%';
+    bar.classList.toggle('mismatch', mismatch);
+
+    const status = document.getElementById('wcStatus');
+    const resolveBtn = document.getElementById('resolveBtn');
+    if (mismatch){
+      status.textContent = '⚠ Weight mismatch detected — please verify the last item placed in the cart.';
+      status.className = 'wc-status bad';
+      resolveBtn.style.display = 'block';
+    } else {
+      status.textContent = 'Item matches barcode — all good.';
+      status.className = 'wc-status ok';
+      resolveBtn.style.display = 'none';
+    }
+
+    // Totals
+    document.getElementById('totalItems').textContent = totalItems;
+    document.getElementById('totalWeight').textContent = fmtG(totalMeasured);
+    document.getElementById('grandTotal').textContent = fmtINR(subtotal);
+    document.getElementById('bagSuggestion').textContent = 'Carry bag: ' + getBagSize(totalMeasured);
+
+    checkoutBtn.disabled = mismatch; // must resolve mismatch before paying
+
+    // Auto-scroll receipt to latest line
+    document.getElementById('receipt').scrollTop = document.getElementById('receipt').scrollHeight;
+  }
+
+  function resolveMismatch(){
+    // Find the most recent event whose measured weight doesn't match expected
+    for (let i = cart.length - 1; i >= 0; i--){
+      if (cart[i].measuredWeight !== cart[i].expectedWeight){
+        cart[i].measuredWeight = cart[i].expectedWeight;
+        cart[i].swapped = false;
+        break;
+      }
+    }
+    render();
+  }
+
+  function removeLast(){
+    cart.pop();
+    render();
+  }
+
+  function resetSession(){
+    cart = [];
+    mismatchNext = false;
+    document.getElementById('mismatchToggle').checked = false;
+    closeOverlay();
+    render();
+    document.getElementById('cartId').textContent = randomCartId();
+  }
+
+  function randomCartId(){
+    return 'CP-' + (1000 + Math.floor(Math.random() * 9000));
+  }
+
+  // ---------------------------------------------------------------
+  // Checkout overlay & steps
+  // ---------------------------------------------------------------
+  const STEPS = ['bill','cash','processing','success','gate'];
+  function showStep(name){
+    STEPS.forEach(s => {
+      document.getElementById('step-' + s).classList.toggle('hidden', s !== name);
+    });
+  }
+
+  function openOverlay(){
+    if (cart.length === 0) return;
+    buildBillStep();
+    showStep('bill');
+    document.getElementById('overlay').classList.add('open');
+  }
+  function closeOverlay(){
+    document.getElementById('overlay').classList.remove('open');
+  }
+
+  function getCartSummary(){
+    const groups = {};
+    let totalWeight = 0, total = 0, totalItems = 0;
+    cart.forEach(ev => {
+      const item = ITEMS.find(i => i.barcode === ev.barcode);
+      if (!groups[ev.barcode]) groups[ev.barcode] = { item, qty:0, lineTotal:0 };
+      groups[ev.barcode].qty += 1;
+      groups[ev.barcode].lineTotal += effectivePrice(item);
+      totalWeight += ev.measuredWeight;
+      total += effectivePrice(item);
+      totalItems += 1;
+    });
+    return { groups: Object.values(groups), totalWeight, total, totalItems };
+  }
+
+  function buildBillStep(){
+    const { groups, totalWeight, total } = getCartSummary();
+    document.getElementById('billList').innerHTML = groups.map(g => `
+      <div class="bill-line">
+        <span class="bl-name">${g.item.name} <span style="color:var(--ink-soft)">x${g.qty}</span></span>
+        <span class="bl-total">${fmtINR(g.lineTotal)}</span>
+      </div>`).join('');
+    document.getElementById('billWeight').textContent = fmtG(totalWeight);
+    document.getElementById('billTotal').textContent = fmtINR(total);
+    document.getElementById('billBagText').textContent = 'Carry bag: ' + getBagSize(totalWeight);
+  }
+
+  // -- Digital payment --
+  function payDigital(){
+    showStep('processing');
+    setTimeout(() => {
+      const { total } = getCartSummary();
+      document.getElementById('successAmount').textContent = fmtINR(total);
+      document.getElementById('successSub').textContent = 'Paid by digital wallet · UPI';
+      document.getElementById('changeBreakdown').style.display = 'none';
+      showStep('success');
+    }, 1100);
+  }
+
+  // -- Cash payment --
+  function openCashStep(){
+    const { total } = getCartSummary();
+    tenderedAmount = 0;
+    document.getElementById('cashDue').textContent = fmtINR(total);
+    renderCashTotals();
+    buildQuickAmounts();
+    showStep('cash');
+  }
+
+  function buildQuickAmounts(){
+    const { total } = getCartSummary();
+    const wrap = document.getElementById('quickAmounts');
+    const notes = [10, 20, 50, 100, 200, 500];
+    wrap.innerHTML = '';
+    notes.forEach(n => {
+      const btn = document.createElement('button');
+      btn.textContent = '+' + fmtINR(n);
+      btn.addEventListener('click', () => { tenderedAmount += n; renderCashTotals(); });
+      wrap.appendChild(btn);
+    });
+    const exact = document.createElement('button');
+    exact.className = 'ghost';
+    exact.textContent = 'Exact amount';
+    exact.addEventListener('click', () => { tenderedAmount = total; renderCashTotals(); });
+    wrap.appendChild(exact);
+
+    const clear = document.createElement('button');
+    clear.className = 'ghost';
+    clear.textContent = 'Clear';
+    clear.addEventListener('click', () => { tenderedAmount = 0; renderCashTotals(); });
+    wrap.appendChild(clear);
+  }
+
+  function renderCashTotals(){
+    const { total } = getCartSummary();
+    document.getElementById('tenderAmt').textContent = fmtINR(tenderedAmount);
+    const due = total - tenderedAmount;
+    const dueRow = document.getElementById('tsDueRow');
+    const changeRow = document.getElementById('tsChangeRow');
+    if (due > 0){
+      dueRow.style.display = 'flex';
+      changeRow.style.display = 'none';
+      document.getElementById('tsDueAmt').textContent = fmtINR(due);
+    } else {
+      dueRow.style.display = 'none';
+      changeRow.style.display = 'flex';
+      document.getElementById('tsChangeAmt').textContent = fmtINR(-due);
+    }
+    document.getElementById('confirmCash').disabled = tenderedAmount < total;
+  }
+
+  function confirmCash(){
+    const { total } = getCartSummary();
+    const change = tenderedAmount - total;
+    document.getElementById('successAmount').textContent = fmtINR(tenderedAmount);
+    document.getElementById('successSub').textContent = 'Paid by cash';
+
+    const breakdown = document.getElementById('changeBreakdown');
+    if (change > 0){
+      breakdown.style.display = 'block';
+      let remaining = change;
+      const rows = [];
+      DENOMINATIONS.forEach(d => {
+        const count = Math.floor(remaining / d);
+        if (count > 0){
+          rows.push(`<div class="cb-row"><span>₹${d} x ${count}</span><span>${fmtINR(d * count)}</span></div>`);
+          remaining -= d * count;
+        }
+      });
+      rows.push(`<div class="cb-row" style="border-top:1px dashed var(--line);margin-top:4px;padding-top:6px;font-weight:700"><span>Total change</span><span>${fmtINR(change)}</span></div>`);
+      document.getElementById('changeRows').innerHTML = rows.join('');
+    } else {
+      breakdown.style.display = 'none';
+    }
+
+    showStep('success');
+  }
+
+  // -- Gate / exit --
+  function continueToGate(){
+    const { groups, totalWeight, total, totalItems } = getCartSummary();
+    document.getElementById('recap').innerHTML = `
+      <div class="recap-row"><span>Cart</span><span>${document.getElementById('cartId').textContent}</span></div>
+      <div class="recap-row"><span>Items</span><span>${totalItems}</span></div>
+      <div class="recap-row"><span>Total weight</span><span>${fmtG(totalWeight)}</span></div>
+      <div class="recap-row"><span>Carry bag</span><span>${getBagSize(totalWeight)}</span></div>
+      <div class="recap-row" style="font-weight:700;border-top:1px dashed var(--line);margin-top:4px;padding-top:6px"><span>Total paid</span><span>${fmtINR(total)}</span></div>
+    `;
+    showStep('gate');
+    const stage = document.getElementById('gateStage');
+    stage.classList.remove('open');
+    requestAnimationFrame(() => setTimeout(() => stage.classList.add('open'), 150));
+  }
+
+  // ---------------------------------------------------------------
+  // Wire up events
+  // ---------------------------------------------------------------
+  document.getElementById('mismatchToggle').addEventListener('change', e => { mismatchNext = e.target.checked; });
+  document.getElementById('removeLastBtn').addEventListener('click', removeLast);
+  document.getElementById('resetBtn').addEventListener('click', resetSession);
+  document.getElementById('resolveBtn').addEventListener('click', resolveMismatch);
+
+  document.getElementById('checkoutBtn').addEventListener('click', openOverlay);
+  document.getElementById('modalClose').addEventListener('click', closeOverlay);
+  document.getElementById('backToShop').addEventListener('click', closeOverlay);
+  document.getElementById('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeOverlay(); });
+
+  document.getElementById('payDigital').addEventListener('click', payDigital);
+  document.getElementById('payCash').addEventListener('click', openCashStep);
+  document.getElementById('backToBillFromCash').addEventListener('click', () => showStep('bill'));
+  document.getElementById('confirmCash').addEventListener('click', confirmCash);
+
+  document.getElementById('continueToGate').addEventListener('click', continueToGate);
+  document.getElementById('newSession').addEventListener('click', resetSession);
+
+  // ---------------------------------------------------------------
+  // Init
+  // ---------------------------------------------------------------
+  document.getElementById('cartId').textContent = randomCartId();
+  buildShelf();
+  render();
+</script>
+</body>
+</html>

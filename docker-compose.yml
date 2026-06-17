@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  # ── PostgreSQL database ─────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB:       cartpay
+      POSTGRES_USER:     cartpay
+      POSTGRES_PASSWORD: cartpay_secret
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # ── Redis (session cache & MQTT-bridge state) ───────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # ── MQTT broker ─────────────────────────────────────────────────────────────
+  mqtt:
+    image: eclipse-mosquitto:2
+    restart: always
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+  # ── CartPay API backend ──────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://cartpay:cartpay_secret@db:5432/cartpay
+      REDIS_URL:    redis://redis:6379/0
+      MQTT_BROKER:  mqtt
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+      - mqtt
+
+  # ── Admin dashboard (served via nginx) ──────────────────────────────────────
+  dashboard:
+    image: nginx:alpine
+    restart: always
+    volumes:
+      - ./admin-dashboard:/usr/share/nginx/html:ro
+    ports:
+      - "3000:80"
+
+volumes:
+  pg_data:

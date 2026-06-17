@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CartPay — Staff Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Outfit:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#F5F1E7;--ink:#20291F;--ink-s:#6B7569;--surface:#FFF;--line:#E1D9C8;
+  --primary:#2E6F4E;--primary-s:#E1EEE6;--accent:#FF6A45;--warn:#D8973C;
+  --warn-s:#FBEFDD;--alert:#D2483F;--alert-s:#FBE2DF;--ok:#2BA567;
+  --font-d:'Space Grotesk',sans-serif;--font-b:'Outfit',sans-serif;--font-m:'Space Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-b);background:var(--bg);color:var(--ink)}
+header{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  background:var(--ink);color:#fff;padding:14px 28px;
+}
+.brand{display:flex;align-items:center;gap:12px}
+.brand h1{font-family:var(--font-d);font-size:22px;letter-spacing:-.02em}
+.brand h1 span{color:#FF6A45}
+.live-indicator{display:flex;align-items:center;gap:8px;font-size:13px;color:#9FB6A8;font-family:var(--font-m)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#5FD08E;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.main{max-width:1280px;margin:0 auto;padding:24px 24px 60px;display:flex;flex-direction:column;gap:20px}
+h2{font-family:var(--font-d);font-size:18px;margin-bottom:14px;font-weight:700}
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 16px}
+.kpi-label{font-size:11px;letter-spacing:.12em;color:var(--ink-s);text-transform:uppercase;margin-bottom:8px}
+.kpi-value{font-family:var(--font-m);font-size:28px;font-weight:700}
+.kpi-value.green{color:var(--primary)}
+.kpi-value.orange{color:var(--warn)}
+.kpi-value.red{color:var(--alert)}
+/* two-col layout */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:780px){.two-col{grid-template-columns:1fr}}
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+/* carts table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;color:var(--ink-s);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--line)}
+td{padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.status-pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700}
+.status-pill.active{background:var(--primary-s);color:var(--primary)}
+.status-pill.idle{background:var(--line);color:var(--ink-s)}
+.status-pill.mismatch{background:var(--alert-s);color:var(--alert);animation:pulse 1.2s infinite}
+.status-pill.paid{background:#DFF5E9;color:var(--ok)}
+/* alerts */
+.alert-list{display:flex;flex-direction:column;gap:10px}
+.alert-item{display:flex;align-items:flex-start;gap:12px;background:var(--alert-s);border:1px solid rgba(210,72,63,.18);border-radius:10px;padding:12px 14px}
+.alert-item.warn{background:var(--warn-s);border-color:rgba(216,151,60,.25)}
+.alert-item.info{background:var(--primary-s);border-color:rgba(46,111,78,.18)}
+.alert-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.alert-dot.red{background:var(--alert)}
+.alert-dot.orange{background:var(--warn)}
+.alert-dot.green{background:var(--ok)}
+.alert-text{flex:1}
+.alert-text strong{font-size:13px;font-weight:600}
+.alert-text p{font-size:12px;color:var(--ink-s);margin-top:2px}
+.resolve-btn{background:none;border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--ink-s)}
+.resolve-btn:hover{border-color:var(--primary);color:var(--primary)}
+/* top items */
+.top-item{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.top-rank{font-family:var(--font-m);font-size:11px;color:var(--ink-s);width:22px;flex-shrink:0}
+.top-bar-wrap{flex:1;background:var(--bg);border-radius:4px;height:10px;overflow:hidden}
+.top-bar-fill{height:100%;border-radius:4px;background:var(--primary);transition:width .4s}
+.top-name{font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top-units{font-family:var(--font-m);font-size:12px;color:var(--ink-s);flex-shrink:0}
+/* footer */
+footer{text-align:center;color:var(--ink-s);font-size:12px;padding:20px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg width="28" height="20" viewBox="0 0 32 24" fill="#FF6A45" aria-hidden="true">
+      <rect x="0" y="0" width="2" height="24"/><rect x="4" y="0" width="4" height="24"/>
+      <rect x="10" y="0" width="2" height="24"/><rect x="14" y="0" width="3" height="24"/>
+      <rect x="19" y="0" width="2" height="24"/><rect x="23" y="0" width="4" height="24"/>
+      <rect x="29" y="0" width="2" height="24"/>
+    </svg>
+    <h1>Cart<span>Pay</span> — Staff Dashboard</h1>
+  </div>
+  <div class="live-indicator">
+    <span class="live-dot"></span> LIVE · Refreshes every 10 s
+  </div>
+</header>
+
+<main class="main">
+  <div class="kpi-row" id="kpiRow"></div>
+  <div class="two-col">
+    <div class="panel">
+      <h2>Active carts</h2>
+      <table>
+        <thead><tr><th>Cart ID</th><th>Status</th><th>Items</th><th>Total (₹)</th><th>Weight</th></tr></thead>
+        <tbody id="cartsBody"></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h2>Live alerts</h2>
+      <div class="alert-list" id="alertList"></div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="panel">
+      <h2>Top items today</h2>
+      <div id="topItems"></div>
+    </div>
+    <div class="panel">
+      <h2>Payment split today</h2>
+      <canvas id="payChart" height="160"></canvas>
+    </div>
+  </div>
+</main>
+<footer>CartPay v1.0 — Internal staff use only</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ── Mock live data generator ──────────────────────────────────────────────────
+const CART_IDS = ['CP-1041','CP-1042','CP-1043','CP-1044','CP-1045','CP-1046'];
+const STATUSES = ['active','active','active','idle','mismatch','paid'];
+const ITEMS_POOL = [
+  'Basmati Rice 1kg','Toned Milk 1L','Detergent 1kg','Mixed Nuts 200g',
+  'Orange Juice 1L','Potato Chips 90g','Butter 500g','Green Tea',
+];
+const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const coin = () => Math.random() > .5;
+
+function mockKPI(){
+  return {
+    active:   rnd(3,12),
+    paid:     rnd(80,220),
+    revenue:  rnd(28000,95000),
+    avgTime:  rnd(95,190),
+    mismatches: rnd(0,5),
+  };
+}
+
+function mockCarts(){
+  return CART_IDS.map((id,i) => ({
+    id,
+    status: STATUSES[i % STATUSES.length],
+    items: rnd(1,18),
+    total: rnd(50,4200),
+    weight: rnd(300,12000),
+  }));
+}
+
+function mockAlerts(){
+  return [
+    { type:'mismatch', cart:'CP-1043', msg:'Weight mismatch on barcode 8901030123464 — extra ~320 g detected', dot:'red' },
+    { type:'warn',     cart:'CP-1046', msg:'Battery at 12% — please return cart to charging dock', dot:'orange' },
+    { type:'info',     cart:'CP-1041', msg:'3 near-expiry items scanned this session', dot:'green' },
+  ].filter(() => coin() || true);  // always show for demo
+}
+
+function mockTopItems(){
+  return [
+    {name:'Basmati Rice 1kg',   units:rnd(40,90)},
+    {name:'Toned Milk 1L',      units:rnd(30,75)},
+    {name:'Detergent Powder 1kg',units:rnd(20,60)},
+    {name:'Potato Chips 90g',   units:rnd(15,55)},
+    {name:'Mixed Nuts 200g',    units:rnd(10,45)},
+  ];
+}
+
+// ── Renderers ─────────────────────────────────────────────────────────────────
+function renderKPI(data){
+  const el = document.getElementById('kpiRow');
+  el.innerHTML = `
+    <div class="kpi"><div class="kpi-label">Active carts</div><div class="kpi-value green">${data.active}</div></div>
+    <div class="kpi"><div class="kpi-label">Checkouts today</div><div class="kpi-value">${data.paid}</div></div>
+    <div class="kpi"><div class="kpi-label">Revenue today</div><div class="kpi-value green">₹${data.revenue.toLocaleString('en-IN')}</div></div>
+    <div class="kpi"><div class="kpi-label">Avg checkout time</div><div class="kpi-value">${data.avgTime}s</div></div>
+    <div class="kpi"><div class="kpi-label">Mismatch alerts</div><div class="kpi-value ${data.mismatches>2?'red':'orange'}">${data.mismatches}</div></div>
+  `;
+}
+
+function renderCarts(carts){
+  document.getElementById('cartsBody').innerHTML = carts.map(c => `
+    <tr>
+      <td><strong style="font-family:var(--font-m)">${c.id}</strong></td>
+      <td><span class="status-pill ${c.status}">${c.status.toUpperCase()}</span></td>
+      <td>${c.items}</td>
+      <td>₹${c.total.toLocaleString('en-IN')}</td>
+      <td>${c.weight.toLocaleString('en-IN')} g</td>
+    </tr>`).join('');
+}
+
+function renderAlerts(alerts){
+  document.getElementById('alertList').innerHTML = alerts.length === 0
+    ? '<p style="color:var(--ink-s);font-size:13px;text-align:center;padding:20px">No active alerts</p>'
+    : alerts.map(a => `
+      <div class="alert-item ${a.type==='mismatch'?'':'a.type'}">
+        <span class="alert-dot ${a.dot}"></span>
+        <div class="alert-text">
+          <strong>${a.type.toUpperCase()} — ${a.cart}</strong>
+          <p>${a.msg}</p>
+        </div>
+        <button class="resolve-btn" onclick="this.closest('.alert-item').remove()">Resolve</button>
+      </div>`).join('');
+}
+
+function renderTopItems(items){
+  const max = items[0].units;
+  document.getElementById('topItems').innerHTML = items.map((it,i) => `
+    <div class="top-item">
+      <span class="top-rank">#${i+1}</span>
+      <span class="top-name">${it.name}</span>
+      <div class="top-bar-wrap"><div class="top-bar-fill" style="width:${(it.units/max*100).toFixed(0)}%"></div></div>
+      <span class="top-units">${it.units}</span>
+    </div>`).join('');
+}
+
+// ── Chart ─────────────────────────────────────────────────────────────────────
+let payChart = null;
+function renderPayChart(){
+  const ctx = document.getElementById('payChart').getContext('2d');
+  const digital = rnd(55,80);
+  const cash = 100 - digital;
+  if (payChart) payChart.destroy();
+  payChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Digital (UPI/Card)', 'Cash'],
+      datasets: [{
+        data: [digital, cash],
+        backgroundColor: ['#2E6F4E','#FF6A45'],
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family: 'Outfit', size: 13 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.raw}%` } },
+      },
+    },
+  });
+}
+
+// ── Refresh ───────────────────────────────────────────────────────────────────
+function refresh(){
+  renderKPI(mockKPI());
+  renderCarts(mockCarts());
+  renderAlerts(mockAlerts());
+  renderTopItems(mockTopItems());
+  renderPayChart();
+}
+
+refresh();
+setInterval(refresh, 10000);
+</script>
+</body>
+</html>
