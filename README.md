@@ -2,8 +2,15 @@
 
 <div align="center">
 
-![CartPay Logo](docs/images/cartpay-logo.png)
+<img src="assets/cartpay-logo.svg" alt="CartPay Logo" width="350">
 
+# 🛒 CartPay — Smart Self-Checkout Trolley System
+
+### Shop. Scan. Pay. Walk Out.
+
+*A Smart IoT-Based Self-Checkout Shopping Trolley for Modern Supermarkets*
+
+</div>
 ### **Shop. Scan. Pay. Walk Out.**
 
 *A Smart IoT-Based Self-Checkout Shopping Trolley for Modern Supermarkets*
